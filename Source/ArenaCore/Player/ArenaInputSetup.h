@@ -27,6 +27,11 @@ public:
 	UPROPERTY() TObjectPtr<UInputAction> IA_Jump;
 	UPROPERTY() TObjectPtr<UInputAction> IA_Look;
 	UPROPERTY() TObjectPtr<UInputAction> IA_Zoom;
+	UPROPERTY() TObjectPtr<UInputAction> IA_TargetCycle;
+
+	// Barre d'action : IA_ActionSlots[i] déclenche le slot i+1 (touches 1..8 par défaut).
+	UPROPERTY() TArray<TObjectPtr<UInputAction>> IA_ActionSlots;
+
 	UPROPERTY() TObjectPtr<UInputMappingContext> IMC_Default;
 
 	// Réglages caméra lus depuis l'ini ([Camera])

@@ -7,6 +7,31 @@ namespace ArenaTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Cooldown_GCD, "Cooldown.GCD", "Global cooldown actif");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Cooldown_Ability, "Cooldown.Ability", "Parent des cooldowns par sort");
 
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Slot0, "Cooldown.Ability.Slot0");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Slot1, "Cooldown.Ability.Slot1");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Slot2, "Cooldown.Ability.Slot2");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Slot3, "Cooldown.Ability.Slot3");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Slot4, "Cooldown.Ability.Slot4");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Slot5, "Cooldown.Ability.Slot5");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Slot6, "Cooldown.Ability.Slot6");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Slot7, "Cooldown.Ability.Slot7");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Slot8, "Cooldown.Ability.Slot8");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Slot9, "Cooldown.Ability.Slot9");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Slot10, "Cooldown.Ability.Slot10");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Slot11, "Cooldown.Ability.Slot11");
+
+	const FGameplayTag& CooldownSlotTag(int32 Slot)
+	{
+		static const FNativeGameplayTag* SlotTags[] =
+		{
+			&Cooldown_Slot0, &Cooldown_Slot1, &Cooldown_Slot2, &Cooldown_Slot3,
+			&Cooldown_Slot4, &Cooldown_Slot5, &Cooldown_Slot6, &Cooldown_Slot7,
+			&Cooldown_Slot8, &Cooldown_Slot9, &Cooldown_Slot10, &Cooldown_Slot11
+		};
+		const int32 Clamped = FMath::Clamp(Slot, 0, UE_ARRAY_COUNT(SlotTags) - 1);
+		return SlotTags[Clamped]->GetTag();
+	}
+
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Casting, "State.Casting", "Une incantation est en cours");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_InCombat, "State.InCombat", "En combat (bloque camouflage, régen…)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Stealth, "State.Stealth", "Camouflé");

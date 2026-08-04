@@ -3,8 +3,10 @@
 #include "Match/ArenaMatchGameMode.h"
 #include "Match/ArenaGameState.h"
 #include "Characters/ArenaCharacter.h"
+#include "Characters/ArenaTrainingDummy.h"
 #include "Player/ArenaPlayerController.h"
 #include "Player/ArenaPlayerState.h"
+#include "UI/ArenaHUD.h"
 #include "Arena/ArenaBuilder.h"
 #include "System/ArenaDataSubsystem.h"
 #include "System/ArenaDataRows.h"
@@ -21,6 +23,7 @@ AArenaMatchGameMode::AArenaMatchGameMode()
 	PlayerControllerClass = AArenaPlayerController::StaticClass();
 	PlayerStateClass = AArenaPlayerState::StaticClass();
 	GameStateClass = AArenaGameState::StaticClass();
+	HUDClass = AArenaHUD::StaticClass();
 }
 
 void AArenaMatchGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
@@ -71,17 +74,22 @@ void AArenaMatchGameMode::SpawnPlayerStartsFromLayout()
 
 	Layout->ForeachRow<FArenaLayoutRow>(TEXT("SpawnPoints"), [this](const FName& RowName, const FArenaLayoutRow& Row)
 	{
-		if (Row.ElementType != FName("Spawn"))
-		{
-			return;
-		}
 		FActorSpawnParameters Params;
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		APlayerStart* Start = GetWorld()->SpawnActor<APlayerStart>(
-			FVector(Row.X, Row.Y, Row.Z), FRotator(0.f, Row.Yaw, 0.f), Params);
-		if (Start)
+
+		if (Row.ElementType == FName("Spawn"))
 		{
-			Start->PlayerStartTag = FName(*FString::Printf(TEXT("Team%d"), FMath::Max(0, Row.Team)));
+			APlayerStart* Start = GetWorld()->SpawnActor<APlayerStart>(
+				FVector(Row.X, Row.Y, Row.Z), FRotator(0.f, Row.Yaw, 0.f), Params);
+			if (Start)
+			{
+				Start->PlayerStartTag = FName(*FString::Printf(TEXT("Team%d"), FMath::Max(0, Row.Team)));
+			}
+		}
+		else if (Row.ElementType == FName("Dummy"))
+		{
+			GetWorld()->SpawnActor<AArenaTrainingDummy>(
+				FVector(Row.X, Row.Y, Row.Z), FRotator(0.f, Row.Yaw, 0.f), Params);
 		}
 	});
 }

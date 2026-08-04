@@ -17,4 +17,8 @@ public:
 	// 0 ou 1 — assigné par le GameMode à la connexion, utilisé pour les portes de départ.
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Arena")
 	int32 TeamIndex = 0;
+
+	// Ligne de StatTemplates.csv / Classes.csv. Changeable via Arena.SetClass (menu en M4).
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Arena")
+	FName ClassId = FName("Warrior");
 };

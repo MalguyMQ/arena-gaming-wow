@@ -66,6 +66,7 @@ void UArenaInputSetup::Build(APlayerController* PlayerController)
 	IA_Jump = MakeAction(EInputActionValueType::Boolean);
 	IA_Look = MakeAction(EInputActionValueType::Axis2D);
 	IA_Zoom = MakeAction(EInputActionValueType::Axis1D);
+	IA_TargetCycle = MakeAction(EInputActionValueType::Boolean);
 
 	IMC_Default = NewObject<UInputMappingContext>(this);
 
@@ -87,8 +88,23 @@ void UArenaInputSetup::Build(APlayerController* PlayerController)
 	MapPositive(IA_Turn, ReadIniKey(Ini, TEXT("Movement"), TEXT("TurnRight"), TEXT("E")));
 	MapNegative(IA_Turn, ReadIniKey(Ini, TEXT("Movement"), TEXT("TurnLeft"), TEXT("A")));
 	MapPositive(IA_Jump, ReadIniKey(Ini, TEXT("Movement"), TEXT("Jump"), TEXT("SpaceBar")));
+	MapPositive(IA_TargetCycle, ReadIniKey(Ini, TEXT("Targeting"), TEXT("CycleTarget"), TEXT("Tab")));
 	MapPositive(IA_Look, EKeys::Mouse2D);
 	MapPositive(IA_Zoom, EKeys::MouseWheelAxis);
+
+	static const TCHAR* DefaultSlotKeys[] =
+	{
+		TEXT("One"), TEXT("Two"), TEXT("Three"), TEXT("Four"),
+		TEXT("Five"), TEXT("Six"), TEXT("Seven"), TEXT("Eight")
+	};
+	IA_ActionSlots.Reset();
+	for (int32 Index = 0; Index < UE_ARRAY_COUNT(DefaultSlotKeys); ++Index)
+	{
+		UInputAction* SlotAction = MakeAction(EInputActionValueType::Boolean);
+		const FString IniKeyName = FString::Printf(TEXT("Slot%d"), Index + 1);
+		MapPositive(SlotAction, ReadIniKey(Ini, TEXT("ActionBar"), *IniKeyName, DefaultSlotKeys[Index]));
+		IA_ActionSlots.Add(SlotAction);
+	}
 
 	if (ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer())
 	{

@@ -7,4 +7,5 @@ void AArenaPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AArenaPlayerState, TeamIndex);
+	DOREPLIFETIME(AArenaPlayerState, ClassId);
 }

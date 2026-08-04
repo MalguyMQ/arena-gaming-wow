@@ -106,7 +106,7 @@ void AArenaBuilder::Rebuild()
 
 void AArenaBuilder::SpawnElement(const FName& RowName, const FArenaLayoutRow& Row)
 {
-	if (Row.ElementType == FName("Spawn"))
+	if (Row.ElementType == FName("Spawn") || Row.ElementType == FName("Dummy"))
 	{
 		return;
 	}

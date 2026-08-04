@@ -3,16 +3,46 @@
 #include "Characters/ArenaCharacter.h"
 #include "Characters/ArenaCharacterMovementComponent.h"
 #include "Player/ArenaPlayerController.h"
+#include "Player/ArenaPlayerState.h"
 #include "Player/ArenaInputSetup.h"
+#include "AbilitySystem/ArenaAbilitySystemComponent.h"
+#include "AbilitySystem/ArenaAttributeSet.h"
+#include "AbilitySystem/Abilities/ArenaAbility_InstantDamage.h"
+#include "Combat/ArenaTargetingComponent.h"
+#include "System/ArenaDataSubsystem.h"
+#include "System/ArenaDataRows.h"
+#include "UI/ArenaNameplateWidget.h"
 #include "ArenaCore.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/WidgetComponent.h"
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
+#include "Engine/DataTable.h"
+#include "Engine/GameInstance.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
+
+FArenaCombatFeedbackDelegate AArenaCharacter::OnCombatFeedback;
+
+static FAutoConsoleCommandWithWorldAndArgs GArenaSetClassCmd(
+	TEXT("Arena.SetClass"),
+	TEXT("Change la classe du personnage local : Arena.SetClass Warrior|Mage|Priest|Rogue"),
+	FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
+	{
+		if (!World || Args.Num() == 0)
+		{
+			return;
+		}
+		APlayerController* PC = World->GetFirstPlayerController();
+		if (AArenaCharacter* Character = PC ? Cast<AArenaCharacter>(PC->GetPawn()) : nullptr)
+		{
+			Character->ServerSetClass(FName(*Args[0]));
+		}
+	}));
 
 AArenaCharacter::AArenaCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UArenaCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -24,6 +54,11 @@ AArenaCharacter::AArenaCharacter(const FObjectInitializer& ObjectInitializer)
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
+
+	AbilitySystem = CreateDefaultSubobject<UArenaAbilitySystemComponent>(TEXT("AbilitySystem"));
+	AbilitySystem->SetReplicationMode(EGameplayEffectReplicationMode::Full);
+	Attributes = CreateDefaultSubobject<UArenaAttributeSet>(TEXT("Attributes"));
+	Targeting = CreateDefaultSubobject<UArenaTargetingComponent>(TEXT("Targeting"));
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
@@ -65,6 +100,158 @@ AArenaCharacter::AArenaCharacter(const FObjectInitializer& ObjectInitializer)
 	FacingMarker->SetRelativeLocation(FVector(45.f, 0.f, 55.f));
 	FacingMarker->SetRelativeScale3D(FVector(0.25f, 0.25f, 0.25f));
 	FacingMarker->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	AbilitySlotRows.Init(NAME_None, 12);
+}
+
+void AArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AArenaCharacter, AbilitySlotRows);
+}
+
+UAbilitySystemComponent* AArenaCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystem;
+}
+
+FName AArenaCharacter::GetClassId() const
+{
+	const AArenaPlayerState* PS = GetPlayerState<AArenaPlayerState>();
+	return PS ? PS->ClassId : FName("Warrior");
+}
+
+FText AArenaCharacter::GetDisplayName() const
+{
+	const APlayerState* PS = GetPlayerState();
+	return PS ? FText::FromString(PS->GetPlayerName()) : NSLOCTEXT("Arena", "UnknownUnit", "Inconnu");
+}
+
+void AArenaCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (AbilitySystem)
+	{
+		AbilitySystem->InitAbilityActorInfo(this, this);
+	}
+	if (HasAuthority())
+	{
+		InitializeClass(GetClassId());
+	}
+}
+
+void AArenaCharacter::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+	if (AbilitySystem)
+	{
+		AbilitySystem->InitAbilityActorInfo(this, this);
+	}
+}
+
+void AArenaCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	if (AbilitySystem)
+	{
+		AbilitySystem->InitAbilityActorInfo(this, this);
+	}
+}
+
+void AArenaCharacter::InitializeClass(FName InClassId)
+{
+	if (!HasAuthority() || !AbilitySystem || !Attributes)
+	{
+		return;
+	}
+
+	const UGameInstance* GI = GetGameInstance();
+	UArenaDataSubsystem* Data = GI ? GI->GetSubsystem<UArenaDataSubsystem>() : nullptr;
+	const FStatTemplateRow* Stats = Data
+		? Data->FindRow<FStatTemplateRow>(UArenaDataSubsystem::TableId_StatTemplates, InClassId)
+		: nullptr;
+	if (!Stats)
+	{
+		UE_LOG(LogArena, Error, TEXT("InitializeClass : template de stats introuvable pour '%s'"), *InClassId.ToString());
+		return;
+	}
+
+	Attributes->SetMaxHealth(Stats->MaxHealth);
+	Attributes->SetHealth(Stats->MaxHealth);
+	Attributes->SetMaxMana(Stats->MaxMana);
+	Attributes->SetMana(Stats->MaxMana);
+	Attributes->SetMaxRage(Stats->MaxRage);
+	Attributes->SetRage(0.f);
+	Attributes->SetMaxEnergy(Stats->MaxEnergy);
+	Attributes->SetEnergy(Stats->MaxEnergy);
+	Attributes->SetComboPoints(0.f);
+	Attributes->SetAttackPower(Stats->AttackPower);
+	Attributes->SetSpellPower(Stats->SpellPower);
+	Attributes->SetHastePct(Stats->HastePct);
+	Attributes->SetCritPct(Stats->CritPct);
+	Attributes->SetDamageTakenMult(1.f);
+	Attributes->SetHealingTakenMult(1.f);
+	Attributes->SetAbsorb(0.f);
+
+	AbilitySlotRows.Init(NAME_None, 12);
+	AbilitySystem->ClearAllAbilities();
+
+	const UDataTable* AbilityTable = Data->GetTable(UArenaDataSubsystem::TableId_Abilities);
+	if (!AbilityTable)
+	{
+		return;
+	}
+
+	// Verbes implémentés en M2 : dégâts directs instantanés sur cible unique.
+	// Les autres lignes du kit occupent leur slot (label UI) mais attendent M3/M4.
+	auto IsInstantDamageRow = [](const FAbilityRow& Row)
+	{
+		return Row.CastTimeSec <= 0.f && Row.DamageBase > 0.f && Row.CCCategory == FName("None")
+			&& !Row.bFinisher && !Row.bFromStealthOnly && !Row.bSelfOnly && !Row.bAlliedTarget && !Row.bAoE;
+	};
+
+	int32 GrantedCount = 0;
+	for (const TPair<FName, uint8*>& Pair : AbilityTable->GetRowMap())
+	{
+		const FAbilityRow* Row = reinterpret_cast<const FAbilityRow*>(Pair.Value);
+		if (!Row || Row->ClassId != InClassId)
+		{
+			continue;
+		}
+		if (Row->Slot < 0 || Row->Slot >= AbilitySlotRows.Num())
+		{
+			continue;
+		}
+
+		AbilitySlotRows[Row->Slot] = Pair.Key;
+		if (IsInstantDamageRow(*Row))
+		{
+			AbilitySystem->GiveAbility(FGameplayAbilitySpec(UArenaAbility_InstantDamage::StaticClass(), 1, Row->Slot));
+			++GrantedCount;
+		}
+	}
+
+	UE_LOG(LogArena, Log, TEXT("Classe '%s' initialisée : %d sorts actifs (M2)."), *InClassId.ToString(), GrantedCount);
+}
+
+void AArenaCharacter::ServerSetClass_Implementation(FName InClassId)
+{
+	if (AArenaPlayerState* PS = GetPlayerState<AArenaPlayerState>())
+	{
+		PS->ClassId = InClassId;
+	}
+	InitializeClass(InClassId);
+}
+
+FName AArenaCharacter::GetAbilityRowForSlot(int32 Slot) const
+{
+	return AbilitySlotRows.IsValidIndex(Slot) ? AbilitySlotRows[Slot] : NAME_None;
+}
+
+void AArenaCharacter::MulticastCombatFeedback_Implementation(float Magnitude, int32 FeedbackType)
+{
+	OnCombatFeedback.Broadcast(this, Magnitude, FeedbackType);
 }
 
 void AArenaCharacter::BeginPlay()
@@ -79,11 +266,39 @@ void AArenaCharacter::BeginPlay()
 	{
 		MarkerMID->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.05f, 0.05f, 0.05f));
 	}
+
+	CreateNameplate();
+}
+
+void AArenaCharacter::CreateNameplate()
+{
+	if (GetNetMode() == NM_DedicatedServer || NameplateComponent)
+	{
+		return;
+	}
+
+	NameplateComponent = NewObject<UWidgetComponent>(this, TEXT("Nameplate"));
+	NameplateComponent->SetupAttachment(RootComponent);
+	NameplateComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	NameplateComponent->SetDrawAtDesiredSize(true);
+	NameplateComponent->SetWidgetClass(UArenaNameplateWidget::StaticClass());
+	NameplateComponent->SetRelativeLocation(FVector(0.f, 0.f, 130.f));
+	NameplateComponent->RegisterComponent();
+	NameplateComponent->InitWidget();
+	if (UArenaNameplateWidget* Plate = Cast<UArenaNameplateWidget>(NameplateComponent->GetWidget()))
+	{
+		Plate->SetObservedCharacter(this);
+	}
 }
 
 void AArenaCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	if (NameplateComponent)
+	{
+		NameplateComponent->SetVisibility(!IsLocallyControlled());
+	}
 
 	if (!IsLocallyControlled())
 	{
@@ -135,6 +350,22 @@ void AArenaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	EnhancedInput->BindAction(Setup->IA_Zoom, ETriggerEvent::Triggered, this, &AArenaCharacter::Input_Zoom);
 	EnhancedInput->BindAction(Setup->IA_Jump, ETriggerEvent::Started, this, &AArenaCharacter::Input_JumpStarted);
 	EnhancedInput->BindAction(Setup->IA_Jump, ETriggerEvent::Completed, this, &AArenaCharacter::Input_JumpCompleted);
+	EnhancedInput->BindAction(Setup->IA_TargetCycle, ETriggerEvent::Started, this, &AArenaCharacter::Input_CycleTarget);
+
+	static const TArray<void (AArenaCharacter::*)(const FInputActionValue&)> SlotHandlers =
+	{
+		&AArenaCharacter::Input_Slot1, &AArenaCharacter::Input_Slot2,
+		&AArenaCharacter::Input_Slot3, &AArenaCharacter::Input_Slot4,
+		&AArenaCharacter::Input_Slot5, &AArenaCharacter::Input_Slot6,
+		&AArenaCharacter::Input_Slot7, &AArenaCharacter::Input_Slot8
+	};
+	for (int32 Index = 0; Index < Setup->IA_ActionSlots.Num() && Index < SlotHandlers.Num(); ++Index)
+	{
+		if (Setup->IA_ActionSlots[Index])
+		{
+			EnhancedInput->BindAction(Setup->IA_ActionSlots[Index], ETriggerEvent::Started, this, SlotHandlers[Index]);
+		}
+	}
 }
 
 void AArenaCharacter::Input_MoveForward(const FInputActionValue& Value)
@@ -198,6 +429,31 @@ void AArenaCharacter::Input_JumpStarted(const FInputActionValue& Value)
 void AArenaCharacter::Input_JumpCompleted(const FInputActionValue& Value)
 {
 	StopJumping();
+}
+
+void AArenaCharacter::Input_CycleTarget(const FInputActionValue& Value)
+{
+	if (Targeting)
+	{
+		Targeting->CycleTarget();
+	}
+}
+
+void AArenaCharacter::Input_Slot1(const FInputActionValue& Value) { ActivateSlot(1); }
+void AArenaCharacter::Input_Slot2(const FInputActionValue& Value) { ActivateSlot(2); }
+void AArenaCharacter::Input_Slot3(const FInputActionValue& Value) { ActivateSlot(3); }
+void AArenaCharacter::Input_Slot4(const FInputActionValue& Value) { ActivateSlot(4); }
+void AArenaCharacter::Input_Slot5(const FInputActionValue& Value) { ActivateSlot(5); }
+void AArenaCharacter::Input_Slot6(const FInputActionValue& Value) { ActivateSlot(6); }
+void AArenaCharacter::Input_Slot7(const FInputActionValue& Value) { ActivateSlot(7); }
+void AArenaCharacter::Input_Slot8(const FInputActionValue& Value) { ActivateSlot(8); }
+
+void AArenaCharacter::ActivateSlot(int32 Slot)
+{
+	if (AbilitySystem)
+	{
+		AbilitySystem->AbilityLocalInputPressed(Slot);
+	}
 }
 
 UArenaInputSetup* AArenaCharacter::GetInputSetup() const

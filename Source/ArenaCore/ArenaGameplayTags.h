@@ -13,6 +13,24 @@ namespace ArenaTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_GCD);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Ability);
 
+	// Cooldowns par slot de barre d'action (les tags dynamiques non déclarés ne
+	// sont pas autorisés par le TagsManager, d'où un pool fixe : un sort = un slot).
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Slot0);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Slot1);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Slot2);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Slot3);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Slot4);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Slot5);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Slot6);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Slot7);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Slot8);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Slot9);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Slot10);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Slot11);
+
+	// Renvoie le tag de cooldown du slot (clampé sur le pool ci-dessus).
+	ARENACORE_API const FGameplayTag& CooldownSlotTag(int32 Slot);
+
 	// États généraux
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Casting);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_InCombat);
