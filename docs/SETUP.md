@@ -9,8 +9,8 @@
 
 ## Installation (une seule fois)
 
-1. **Epic Games Launcher** → onglet Unreal Engine → Bibliothèque → installer **UE 5.5.x**
-   (rester sur 5.5 : on ne change pas de version moteur avant le jalon M6).
+1. **Epic Games Launcher** → onglet Unreal Engine → Bibliothèque → installer **UE 5.8.x**
+   (version épinglée du projet : on ne change pas de version moteur avant le jalon M6).
 2. **Visual Studio 2022 Community** (gratuit) avec le workload
    **« Développement de jeux avec C++ »** (Game development with C++).
    Vérifier que les composants « Windows 10/11 SDK » et « .NET SDK » sont cochés.

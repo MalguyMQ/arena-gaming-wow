@@ -4,7 +4,7 @@ Un jeu PvP-only qui reproduit les sensations des arènes 2v2/3v3 de WoW — sans
 Pour les joueurs d'arène orphelins : tab-target, GCD, incantations/interruptions, CC avec
 rendements décroissants, pillar play. Format moderne en manches (BO3), kits resserrés.
 
-**Moteur :** Unreal Engine 5.5 (C++ / Gameplay Ability System) · **Premier jouable :** duel 1v1 en ligne + mannequins.
+**Moteur :** Unreal Engine 5.8 (C++ / Gameplay Ability System) · **Premier jouable :** duel 1v1 en ligne + mannequins.
 
 ## Démarrage rapide
 

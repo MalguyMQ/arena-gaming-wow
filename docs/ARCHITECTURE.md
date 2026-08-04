@@ -1,6 +1,6 @@
 # Architecture technique
 
-UE **5.5.x** épinglé (pas de montée de version avant M6). C++ + GAS. Serveur autoritaire dès le
+UE **5.8.x** épinglé (pas de montée de version avant M6). C++ + GAS. Serveur autoritaire dès le
 jour 1 — tout se teste en PIE multi-joueurs (listen server). Le projet est **maximalement
 code-first et data-driven** : le dépôt ne contient que du texte (C++, ini, CSV, docs) ; les seuls
 assets binaires (maps vides, feature pack, AnimBP) sont créés localement via les checklists.
@@ -76,5 +76,5 @@ UI/          (M2+) HUD + widgets C++
 1. Prédiction GAS (pas d'expiration prédite des CD) → spell queue + tests `Net PktLag=100 PktLoss=2` à chaque jalon.
 2. Dérive vers les assets éditeur → assets uniquement via checklists, soft paths + fallbacks.
 3. NAT/CGNAT en IP directe → Tailscale pour les tests, EOS en M7, jamais de relay maison.
-4. `CreateTableFromCSVString` potentiellement editor-only sur 5.5 → à vérifier au premier build M1 ; fallback parseur maison prévu.
+4. `CreateTableFromCSVString` potentiellement editor-only selon la version moteur → à vérifier au premier build M1 ; fallback parseur maison prévu.
 5. Quotas Git LFS (~1 Go) → le repo reste ~99 % texte.
