@@ -1,0 +1,16 @@
+Name,ElementType,Shape,X,Y,Z,Yaw,ScaleX,ScaleY,ScaleZ,ColorR,ColorG,ColorB,Team
+Floor,Floor,Cube,0,0,-25,0,52,42,0.5,0.32,0.36,0.30,-1
+WallN,Wall,Cube,0,2100,200,0,52,0.5,4,0.42,0.40,0.36,-1
+WallS,Wall,Cube,0,-2100,200,0,52,0.5,4,0.42,0.40,0.36,-1
+WallE,Wall,Cube,2600,0,200,0,0.5,42,4,0.42,0.40,0.36,-1
+WallW,Wall,Cube,-2600,0,200,0,0.5,42,4,0.42,0.40,0.36,-1
+PillarN,Pillar,Cylinder,0,800,250,0,6,6,5,0.52,0.46,0.34,-1
+PillarS,Pillar,Cylinder,0,-800,250,0,6,6,5,0.52,0.46,0.34,-1
+GateE,Gate,Cube,2200,0,150,0,0.3,8,3,0.72,0.28,0.24,1
+GateW,Gate,Cube,-2200,0,150,0,0.3,8,3,0.24,0.38,0.75,0
+PocketNE,Wall,Cube,2400,400,200,0,4,0.3,4,0.42,0.40,0.36,-1
+PocketSE,Wall,Cube,2400,-400,200,0,4,0.3,4,0.42,0.40,0.36,-1
+PocketNW,Wall,Cube,-2400,400,200,0,4,0.3,4,0.42,0.40,0.36,-1
+PocketSW,Wall,Cube,-2400,-400,200,0,4,0.3,4,0.42,0.40,0.36,-1
+SpawnW,Spawn,Cube,-2400,0,100,0,1,1,1,0,0,0,0
+SpawnE,Spawn,Cube,2400,0,100,180,1,1,1,0,0,0,1

@@ -1,0 +1,5 @@
+Name,DisplayName,ResourceType,ColorR,ColorG,ColorB,Description
+Warrior,Guerrier,Rage,0.78,0.61,0.43,"Mêlée pression : colle sa cible, réduit les soins reçus, interrompt."
+Mage,Mage,Mana,0.25,0.78,0.92,"Contrôle et burst à distance : ralentit, racine, incante depuis la distance."
+Priest,Prêtre,Mana,1.0,1.0,1.0,"Soigneur : soins, boucliers, dissipation — le cœur des comps d'arène."
+Rogue,Voleur,Energy,1.0,0.96,0.41,"Burst furtif : ouverture depuis le camouflage, étourdissements en chaîne."

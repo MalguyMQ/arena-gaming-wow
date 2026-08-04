@@ -1,0 +1,18 @@
+# Unreal Engine — jamais versionnés
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+Build/
+Platforms/
+
+# IDE
+.vs/
+.idea/
+.vsconfig
+*.sln
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db

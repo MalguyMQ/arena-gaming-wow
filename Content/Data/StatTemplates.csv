@@ -1,0 +1,5 @@
+Name,MaxHealth,MaxMana,ManaRegenPerSec,MaxRage,MaxEnergy,EnergyRegenPerSec,AttackPower,SpellPower,HastePct,CritPct
+Warrior,22000,0,0,100,0,0,1000,0,0,5
+Mage,19000,10000,80,0,0,0,0,1000,0,5
+Priest,20000,12000,110,0,0,0,0,900,0,5
+Rogue,20000,0,0,0,100,10,950,0,0,5
