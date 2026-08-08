@@ -104,6 +104,12 @@ void AArenaCharacter::Tick(float DeltaSeconds)
 	}
 	bMouselookHeld = bRightMouseDown;
 
+	// WoW : les deux boutons de la souris maintenus = avancer (en steerant à la souris).
+	if (bRightMouseDown && IsLeftMouseDown())
+	{
+		AddMovementInput(GetActorForwardVector(), 1.f);
+	}
+
 	if (SpringArm)
 	{
 		SpringArm->SetRelativeRotation(FRotator(CameraPitch, CameraYawOffset, 0.f));
