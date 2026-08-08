@@ -27,6 +27,13 @@ public:
 
 	void Rebuild();
 
+	// Détruit les portes de départ (préparation terminée). Provisoire : timer
+	// local sur chaque machine — M5 le pilotera depuis la phase de match répliquée.
+	void OpenGates();
+
+	UPROPERTY(EditAnywhere, Category = "Arena")
+	float GateOpenDelaySec = 15.f;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -34,6 +41,8 @@ protected:
 private:
 	void SpawnElement(const FName& RowName, const FArenaLayoutRow& Row);
 	void ClearBuilt();
+
+	FTimerHandle GateTimerHandle;
 
 	UPROPERTY() TObjectPtr<USceneComponent> Root;
 	UPROPERTY() TObjectPtr<UDirectionalLightComponent> KeyLight;
