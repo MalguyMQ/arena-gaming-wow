@@ -68,18 +68,18 @@ void AArenaTrainingDummy::BeginPlay()
 void AArenaTrainingDummy::CheckHealthReset()
 {
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	const UArenaAttributeSet* Attributes = ASC ? ASC->GetSet<UArenaAttributeSet>() : nullptr;
-	if (!Attributes)
+	const UArenaAttributeSet* DummyAttributes = ASC ? ASC->GetSet<UArenaAttributeSet>() : nullptr;
+	if (!DummyAttributes)
 	{
 		return;
 	}
 
-	const bool bDamaged = Attributes->GetHealth() < Attributes->GetMaxHealth();
+	const bool bDamaged = DummyAttributes->GetHealth() < DummyAttributes->GetMaxHealth();
 	const bool bQuietPeriodElapsed =
 		LastDamageTime < 0.f || (GetWorld()->GetTimeSeconds() - LastDamageTime) >= HealthResetDelaySec;
 
 	if (bDamaged && bQuietPeriodElapsed)
 	{
-		ASC->SetNumericAttributeBase(UArenaAttributeSet::GetHealthAttribute(), Attributes->GetMaxHealth());
+		ASC->SetNumericAttributeBase(UArenaAttributeSet::GetHealthAttribute(), DummyAttributes->GetMaxHealth());
 	}
 }
