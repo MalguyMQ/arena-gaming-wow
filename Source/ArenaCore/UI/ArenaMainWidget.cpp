@@ -24,6 +24,7 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/GameInstance.h"
+#include "GameFramework/GameStateBase.h"
 #include "Styling/CoreStyle.h"
 
 void UArenaMainWidget::NativeOnInitialized()
@@ -83,6 +84,12 @@ void UArenaMainWidget::NativeOnInitialized()
 
 		ActionSlots.Add(SlotWidgets);
 	}
+
+	// Cast bars : la sienne au-dessus de la barre d'action, celle de la cible sous sa frame.
+	OwnCastBar = BuildCastBar(RootCanvas, FAnchors(0.5f, 1.f, 0.5f, 1.f), FVector2D(0.5f, 1.f),
+		FVector2D(0.f, -130.f), FVector2D(320.f, 40.f));
+	TargetCastBar = BuildCastBar(RootCanvas, FAnchors(0.f, 0.f, 0.f, 0.f), FVector2D(0.f, 0.f),
+		FVector2D(340.f, 132.f), FVector2D(240.f, 32.f));
 
 	GateCountdownText = WidgetTree->ConstructWidget<UTextBlock>();
 	GateCountdownText->SetFont(FCoreStyle::GetDefaultFontStyle("Bold", 26));
@@ -266,10 +273,18 @@ void UArenaMainWidget::HandleCombatFeedback(AActor* Victim, float Magnitude, int
 	FFloatingText Entry;
 	Entry.Text = WidgetTree->ConstructWidget<UTextBlock>();
 	Entry.Text->SetFont(FCoreStyle::GetDefaultFontStyle("Bold", 18));
-	Entry.Text->SetColorAndOpacity(FSlateColor(FeedbackType == 1
-		? FLinearColor(0.3f, 1.f, 0.35f)
-		: FLinearColor(1.f, 0.25f, 0.2f)));
-	Entry.Text->SetText(FText::AsNumber(FMath::RoundToInt(Magnitude)));
+	if (FeedbackType == 2)
+	{
+		Entry.Text->SetColorAndOpacity(FSlateColor(FLinearColor(1.f, 0.6f, 0.1f)));
+		Entry.Text->SetText(NSLOCTEXT("Arena", "Interrupted", "Interrompu !"));
+	}
+	else
+	{
+		Entry.Text->SetColorAndOpacity(FSlateColor(FeedbackType == 1
+			? FLinearColor(0.3f, 1.f, 0.35f)
+			: FLinearColor(1.f, 0.25f, 0.2f)));
+		Entry.Text->SetText(FText::AsNumber(FMath::RoundToInt(Magnitude)));
+	}
 
 	UCanvasPanelSlot* TextSlot = RootCanvas->AddChildToCanvas(Entry.Text);
 	TextSlot->SetAutoSize(true);
@@ -330,8 +345,72 @@ void UArenaMainWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime
 	UpdateUnitFrame(TargetFrame, Target);
 
 	UpdateActionBar(OwnCharacter);
+	UpdateCastBar(OwnCastBar, OwnCharacter);
+	UpdateCastBar(TargetCastBar, Target);
 	UpdateFloatingTexts(GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f);
 	UpdateGateCountdown();
+}
+
+UArenaMainWidget::FCastBar UArenaMainWidget::BuildCastBar(UCanvasPanel* Canvas, const FAnchors& Anchors,
+	const FVector2D& Alignment, const FVector2D& Position, const FVector2D& Size)
+{
+	FCastBar CastBar;
+
+	CastBar.Root = WidgetTree->ConstructWidget<UBorder>();
+	CastBar.Root->SetBrushColor(FLinearColor(0.05f, 0.05f, 0.07f, 0.85f));
+	CastBar.Root->SetPadding(FMargin(6.f));
+
+	UCanvasPanelSlot* BarSlot = Canvas->AddChildToCanvas(CastBar.Root);
+	BarSlot->SetAnchors(Anchors);
+	BarSlot->SetAlignment(Alignment);
+	BarSlot->SetPosition(Position);
+	BarSlot->SetSize(Size);
+
+	UVerticalBox* Layout = WidgetTree->ConstructWidget<UVerticalBox>();
+	CastBar.Root->SetContent(Layout);
+
+	CastBar.Label = WidgetTree->ConstructWidget<UTextBlock>();
+	CastBar.Label->SetFont(FCoreStyle::GetDefaultFontStyle("Regular", 10));
+	CastBar.Label->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+	Layout->AddChildToVerticalBox(CastBar.Label);
+
+	CastBar.Bar = WidgetTree->ConstructWidget<UProgressBar>();
+	CastBar.Bar->SetFillColorAndOpacity(FLinearColor(0.95f, 0.75f, 0.2f));
+	Layout->AddChildToVerticalBox(CastBar.Bar);
+
+	CastBar.Root->SetVisibility(ESlateVisibility::Hidden);
+	return CastBar;
+}
+
+void UArenaMainWidget::UpdateCastBar(const FCastBar& CastBar, const AArenaCharacter* Character) const
+{
+	if (!CastBar.Root)
+	{
+		return;
+	}
+
+	const AGameStateBase* GS = GetWorld() ? GetWorld()->GetGameState() : nullptr;
+	const float ServerNow = GS ? GS->GetServerWorldTimeSeconds() : 0.f;
+
+	const FArenaCastState* CS = Character ? &Character->GetCastState() : nullptr;
+	if (!CS || !CS->IsActive(ServerNow))
+	{
+		CastBar.Root->SetVisibility(ESlateVisibility::Hidden);
+		return;
+	}
+
+	const float Duration = FMath::Max(0.05f, CS->EndServerTime - CS->StartServerTime);
+	CastBar.Bar->SetPercent(FMath::Clamp((ServerNow - CS->StartServerTime) / Duration, 0.f, 1.f));
+
+	FText SpellName = FText::FromName(CS->AbilityRow);
+	const UGameInstance* GI = Character->GetGameInstance();
+	UArenaDataSubsystem* Data = GI ? GI->GetSubsystem<UArenaDataSubsystem>() : nullptr;
+	if (const FAbilityRow* Row = Data ? Data->FindRow<FAbilityRow>(UArenaDataSubsystem::TableId_Abilities, CS->AbilityRow) : nullptr)
+	{
+		SpellName = FText::FromString(Row->DisplayName);
+	}
+	CastBar.Label->SetText(SpellName);
+	CastBar.Root->SetVisibility(ESlateVisibility::HitTestInvisible);
 }
 
 void UArenaMainWidget::UpdateGateCountdown()

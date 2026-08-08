@@ -8,6 +8,9 @@
 #include "AbilitySystem/ArenaAbilitySystemComponent.h"
 #include "AbilitySystem/ArenaAttributeSet.h"
 #include "AbilitySystem/Abilities/ArenaAbility_InstantDamage.h"
+#include "AbilitySystem/Abilities/ArenaAbility_CastedSpell.h"
+#include "AbilitySystem/Abilities/ArenaAbility_Interrupt.h"
+#include "GameFramework/GameStateBase.h"
 #include "Combat/ArenaTargetingComponent.h"
 #include "System/ArenaDataSubsystem.h"
 #include "System/ArenaDataRows.h"
@@ -108,6 +111,36 @@ void AArenaCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AArenaCharacter, AbilitySlotRows);
+	DOREPLIFETIME(AArenaCharacter, CastState);
+}
+
+void AArenaCharacter::SetCastState(FName AbilityRow, float Duration)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+	const AGameStateBase* GS = GetWorld() ? GetWorld()->GetGameState() : nullptr;
+	const float ServerNow = GS ? GS->GetServerWorldTimeSeconds() : (GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f);
+	CastState.AbilityRow = AbilityRow;
+	CastState.StartServerTime = ServerNow;
+	CastState.EndServerTime = ServerNow + Duration;
+}
+
+void AArenaCharacter::ClearCastState()
+{
+	if (HasAuthority())
+	{
+		CastState = FArenaCastState();
+	}
+}
+
+void AArenaCharacter::NotifyCombatActivity()
+{
+	if (HasAuthority() && GetWorld())
+	{
+		LastCombatTime = GetWorld()->GetTimeSeconds();
+	}
 }
 
 UAbilitySystemComponent* AArenaCharacter::GetAbilitySystemComponent() const
@@ -203,12 +236,17 @@ void AArenaCharacter::InitializeClass(FName InClassId)
 		return;
 	}
 
-	// Verbes implémentés en M2 : dégâts directs instantanés sur cible unique.
-	// Les autres lignes du kit occupent leur slot (label UI) mais attendent M3/M4.
-	auto IsInstantDamageRow = [](const FAbilityRow& Row)
+	CachedManaRegenPerSec = Stats->ManaRegenPerSec;
+	CachedEnergyRegenPerSec = Stats->EnergyRegenPerSec;
+
+	// Un verbe = une classe C++ générique. Les lignes dont le verbe n'est pas
+	// encore implémenté occupent leur slot (label UI) sans être données.
+	auto VerbClass = [](FName Verb) -> TSubclassOf<UGameplayAbility>
 	{
-		return Row.CastTimeSec <= 0.f && Row.DamageBase > 0.f && Row.CCCategory == FName("None")
-			&& !Row.bFinisher && !Row.bFromStealthOnly && !Row.bSelfOnly && !Row.bAlliedTarget && !Row.bAoE;
+		if (Verb == FName("InstantDamage")) { return UArenaAbility_InstantDamage::StaticClass(); }
+		if (Verb == FName("CastedSpell")) { return UArenaAbility_CastedSpell::StaticClass(); }
+		if (Verb == FName("Interrupt")) { return UArenaAbility_Interrupt::StaticClass(); }
+		return nullptr;
 	};
 
 	int32 GrantedCount = 0;
@@ -225,14 +263,14 @@ void AArenaCharacter::InitializeClass(FName InClassId)
 		}
 
 		AbilitySlotRows[Row->Slot] = Pair.Key;
-		if (IsInstantDamageRow(*Row))
+		if (const TSubclassOf<UGameplayAbility> AbilityClass = VerbClass(Row->Verb))
 		{
-			AbilitySystem->GiveAbility(FGameplayAbilitySpec(UArenaAbility_InstantDamage::StaticClass(), 1, Row->Slot));
+			AbilitySystem->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, Row->Slot));
 			++GrantedCount;
 		}
 	}
 
-	UE_LOG(LogArena, Log, TEXT("Classe '%s' initialisée : %d sorts actifs (M2)."), *InClassId.ToString(), GrantedCount);
+	UE_LOG(LogArena, Log, TEXT("Classe '%s' initialisée : %d sorts actifs."), *InClassId.ToString(), GrantedCount);
 }
 
 void AArenaCharacter::ServerSetClass_Implementation(FName InClassId)
@@ -294,6 +332,26 @@ void AArenaCharacter::CreateNameplate()
 void AArenaCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	// Serveur : régénération des ressources (mana/énergie passives, rage en
+	// combat qui décroît hors combat — fenêtre de 6 s après la dernière action).
+	if (HasAuthority() && Attributes && AbilitySystem)
+	{
+		if (CachedManaRegenPerSec > 0.f)
+		{
+			Attributes->SetMana(Attributes->GetMana() + CachedManaRegenPerSec * DeltaSeconds);
+		}
+		if (CachedEnergyRegenPerSec > 0.f)
+		{
+			Attributes->SetEnergy(Attributes->GetEnergy() + CachedEnergyRegenPerSec * DeltaSeconds);
+		}
+		if (Attributes->GetMaxRage() > 0.f)
+		{
+			const bool bInCombat = (GetWorld()->GetTimeSeconds() - LastCombatTime) < CombatWindowSec;
+			const float RageDelta = bInCombat ? RageInCombatPerSec : -RageDecayPerSec;
+			Attributes->SetRage(Attributes->GetRage() + RageDelta * DeltaSeconds);
+		}
+	}
 
 	if (NameplateComponent)
 	{
@@ -458,7 +516,7 @@ void AArenaCharacter::ActivateSlot(int32 Slot)
 {
 	if (AbilitySystem)
 	{
-		AbilitySystem->AbilityLocalInputPressed(Slot);
+		AbilitySystem->TryActivateSlot(Slot);
 	}
 }
 

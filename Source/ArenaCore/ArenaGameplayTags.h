@@ -31,6 +31,13 @@ namespace ArenaTags
 	// Renvoie le tag de cooldown du slot (clampé sur le pool ci-dessus).
 	ARENACORE_API const FGameplayTag& CooldownSlotTag(int32 Slot);
 
+	// Marqueur des abilities à incantation (ciblées par les interruptions)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Cast);
+
+	// École / verrouillage à partir du nom CSV ("Frost", "Holy"… — défaut : Physical)
+	ARENACORE_API const FGameplayTag& SchoolTagFromName(FName School);
+	ARENACORE_API const FGameplayTag& LockoutTagFromName(FName School);
+
 	// États généraux
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Casting);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_InCombat);

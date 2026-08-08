@@ -32,6 +32,8 @@ namespace ArenaTags
 		return SlotTags[Clamped]->GetTag();
 	}
 
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Cast, "Ability.Cast", "Ability à incantation — annulable par une interruption");
+
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Casting, "State.Casting", "Une incantation est en cours");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_InCombat, "State.InCombat", "En combat (bloque camouflage, régen…)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Stealth, "State.Stealth", "Camouflé");
@@ -70,6 +72,26 @@ namespace ArenaTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Data_Heal, "Data.Heal", "SetByCaller : soins de base");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Data_Duration, "Data.Duration", "SetByCaller : durée d'effet");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Data_Cost, "Data.Cost", "SetByCaller : coût en ressource");
+
+	const FGameplayTag& SchoolTagFromName(FName School)
+	{
+		if (School == FName("Frost")) { return School_Frost; }
+		if (School == FName("Fire")) { return School_Fire; }
+		if (School == FName("Arcane")) { return School_Arcane; }
+		if (School == FName("Holy")) { return School_Holy; }
+		if (School == FName("Shadow")) { return School_Shadow; }
+		return School_Physical;
+	}
+
+	const FGameplayTag& LockoutTagFromName(FName School)
+	{
+		if (School == FName("Frost")) { return Lockout_Frost; }
+		if (School == FName("Fire")) { return Lockout_Fire; }
+		if (School == FName("Arcane")) { return Lockout_Arcane; }
+		if (School == FName("Holy")) { return Lockout_Holy; }
+		if (School == FName("Shadow")) { return Lockout_Shadow; }
+		return Lockout_Physical;
+	}
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Cue_Damage, "GameplayCue.Arena.Damage", "Feedback de dégâts (combat text, flash)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Cue_Heal, "GameplayCue.Arena.Heal", "Feedback de soins");

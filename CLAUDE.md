@@ -10,8 +10,12 @@ Format moderne : manches BO3, kits resserrés 8-10 touches. IP originale (aucun 
 ## État actuel (mettre à jour à chaque jalon)
 
 - **M1** (squelette, contrôles WoW, arène procédurale) : validé en jeu — déplacements approuvés par Quentin, ne pas dégrader ce feeling.
-- **M2** (GAS, dégâts, tab-target, mannequins, UI) : sur la branche `claude/wow-pvp-arenas-game-bas9jd-m2`, en cours de test.
-- **M3** (casts, interruptions, ressources, spell queue) : à venir.
+- **M2** (GAS, dégâts, tab-target, mannequins, UI) : sur la branche `...-m2`, en cours de test.
+- **M3** (casts, interruptions, ressources, spell queue) : développé sur `...-m3` (session web).
+- **M5** (machine à phases, BO3) : en cours en local par Quentin (session CLI).
+- Coordination : les sorts sont attribués par **verbe** (`Verb` dans Abilities.csv →
+  classe C++ générique) ; la session M5 ne touche pas à AbilitySystem/, la session M3
+  ne touche pas à Match/.
 
 ## Workflow de branches
 

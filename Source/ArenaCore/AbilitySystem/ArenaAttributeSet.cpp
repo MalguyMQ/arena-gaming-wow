@@ -87,6 +87,15 @@ void UArenaAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 		if (AArenaCharacter* Victim = Cast<AArenaCharacter>(Data.Target.GetAvatarActor()))
 		{
 			Victim->MulticastCombatFeedback(IncomingDamage, 0);
+			Victim->NotifyCombatActivity();
+			if (GetMaxRage() > 0.f)
+			{
+				SetRage(GetRage() + 8.f);
+			}
+		}
+		if (AArenaCharacter* Instigator = Cast<AArenaCharacter>(Data.EffectSpec.GetContext().GetInstigator()))
+		{
+			Instigator->NotifyCombatActivity();
 		}
 	}
 	else if (Data.EvaluatedData.Attribute == GetHealingAttribute())

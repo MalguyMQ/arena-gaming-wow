@@ -52,11 +52,21 @@ private:
 		float SpawnTime = 0.f;
 	};
 
+	struct FCastBar
+	{
+		UBorder* Root = nullptr;
+		UProgressBar* Bar = nullptr;
+		UTextBlock* Label = nullptr;
+	};
+
 	FUnitFrame BuildUnitFrame(UCanvasPanel* Canvas, const FVector2D& Position);
 	void UpdateUnitFrame(const FUnitFrame& Frame, const AArenaCharacter* Character) const;
 	void UpdateActionBar(const AArenaCharacter* Character);
 	void UpdateFloatingTexts(float Now);
 	void UpdateGateCountdown();
+	FCastBar BuildCastBar(UCanvasPanel* Canvas, const FAnchors& Anchors, const FVector2D& Alignment,
+		const FVector2D& Position, const FVector2D& Size);
+	void UpdateCastBar(const FCastBar& CastBar, const AArenaCharacter* Character) const;
 	void HandleCombatFeedback(AActor* Victim, float Magnitude, int32 FeedbackType);
 
 	UPROPERTY() TObjectPtr<UCanvasPanel> RootCanvas;
@@ -66,6 +76,8 @@ private:
 
 	FUnitFrame PlayerFrame;
 	FUnitFrame TargetFrame;
+	FCastBar OwnCastBar;
+	FCastBar TargetCastBar;
 	TArray<FActionSlotWidgets> ActionSlots;
 	TArray<FFloatingText> FloatingTexts;
 	FDelegateHandle FeedbackHandle;

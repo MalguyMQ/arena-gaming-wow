@@ -17,9 +17,27 @@ class UArenaAbilitySystemComponent;
 class UArenaAttributeSet;
 class UArenaTargetingComponent;
 
-// (Victime, magnitude, type : 0 = dégâts, 1 = soins) — écouté par l'UI locale
-// pour le combat text flottant. Diffusé par MulticastCombatFeedback.
+// (Victime, magnitude, type : 0 = dégâts, 1 = soins, 2 = interrompu) — écouté
+// par l'UI locale pour le combat text flottant. Diffusé par MulticastCombatFeedback.
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FArenaCombatFeedbackDelegate, AActor*, float, int32);
+
+// Incantation en cours, répliquée à tous (les activations GAS ne répliquent pas
+// aux proxys — les cast bars ennemies se construisent depuis cet état, corrigées
+// du ping via GetServerWorldTimeSeconds).
+USTRUCT()
+struct FArenaCastState
+{
+	GENERATED_BODY()
+
+	UPROPERTY() FName AbilityRow;
+	UPROPERTY() float StartServerTime = 0.f;
+	UPROPERTY() float EndServerTime = 0.f;
+
+	bool IsActive(float ServerNow) const
+	{
+		return !AbilityRow.IsNone() && ServerNow < EndServerTime;
+	}
+};
 
 // Personnage d'arène avec contrôles caméra à la WoW :
 // - clic droit maintenu : la souris oriente le personnage (mouselook)
@@ -64,6 +82,14 @@ public:
 	void MulticastCombatFeedback(float Magnitude, int32 FeedbackType);
 
 	static FArenaCombatFeedbackDelegate OnCombatFeedback;
+
+	// Serveur : pose/efface l'incantation en cours (répliquée pour les cast bars).
+	void SetCastState(FName AbilityRow, float Duration);
+	void ClearCastState();
+	const FArenaCastState& GetCastState() const { return CastState; }
+
+	// Serveur : signale une activité de combat (fenêtre de 6 s pour la rage).
+	void NotifyCombatActivity();
 
 protected:
 	virtual void BeginPlay() override;
@@ -115,6 +141,9 @@ protected:
 	UPROPERTY(Replicated)
 	TArray<FName> AbilitySlotRows;
 
+	UPROPERTY(Replicated)
+	FArenaCastState CastState;
+
 	UPROPERTY(EditAnywhere, Category = "Arena|Camera")
 	float KeyboardTurnRateDeg = 140.f;
 
@@ -139,4 +168,13 @@ private:
 	float CameraPitch = -15.f;
 	float CameraYawOffset = 0.f;
 	bool bMouselookHeld = false;
+
+	// Serveur : régénération des ressources (valeurs mises en cache par InitializeClass).
+	float CachedManaRegenPerSec = 0.f;
+	float CachedEnergyRegenPerSec = 0.f;
+	float LastCombatTime = -100.f;
+
+	static constexpr float CombatWindowSec = 6.f;
+	static constexpr float RageInCombatPerSec = 6.f;
+	static constexpr float RageDecayPerSec = 12.f;
 };

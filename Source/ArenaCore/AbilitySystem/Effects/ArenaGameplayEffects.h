@@ -38,3 +38,23 @@ class ARENACORE_API UArenaGE_Damage : public UGameplayEffect
 public:
 	UArenaGE_Damage();
 };
+
+// Soins : valeur en SetByCaller (Data.Heal), ExecCalc applique crit et
+// multiplicateur de soins reçus (réduction type Frappe brutale).
+UCLASS()
+class ARENACORE_API UArenaGE_Heal : public UGameplayEffect
+{
+	GENERATED_BODY()
+public:
+	UArenaGE_Heal();
+};
+
+// Verrouillage d'école après interruption : durée SetByCaller (Data.Duration),
+// le tag Lockout.School.<École> est ajouté dynamiquement sur le spec.
+UCLASS()
+class ARENACORE_API UArenaGE_SchoolLockout : public UGameplayEffect
+{
+	GENERATED_BODY()
+public:
+	UArenaGE_SchoolLockout();
+};

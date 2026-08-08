@@ -42,6 +42,10 @@ struct FAbilityRow : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) FName ClassId;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) FString DisplayName;
+	// Classe C++ générique qui sert ce sort : InstantDamage, CastedSpell,
+	// Interrupt (M3)… Les verbes non implémentés occupent leur slot (label UI)
+	// sans être donnés au joueur.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly) FName Verb = FName("None");
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) int32 Slot = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) float CastTimeSec = 0.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) bool bOnGCD = true;
