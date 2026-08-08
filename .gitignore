@@ -11,6 +11,7 @@ Platforms/
 .idea/
 .vsconfig
 *.sln
+*.slnx
 *.code-workspace
 
 # OS
