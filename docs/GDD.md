@@ -12,7 +12,22 @@ contrôles avec rendements décroissants, jeu autour du soigneur, cooldown tradi
 2. **Kits resserrés** — 8-10 touches max par classe. Chaque bouton compte ; la profondeur
    vient des interactions, pas du nombre de binds.
 
-**IP originale** : mécaniques inspirées, mais noms, univers et assets 100 % originaux.
+**IP originale** : mécaniques inspirées, mais noms, univers et assets 100 % originaux
+(assets tiers sous licence : Paragon, Tidal Flask — pas d'assets Blizzard).
+
+## Direction artistique
+
+- **Personnages : héros Paragon** (assets AAA gratuits d'Epic, animations de combat
+  complètes). Mapping : Guerrier = Greystone, Mage = Gideon, Prêtre = Muriel,
+  Voleur = Kallari. Les races Valdris/Kargh restent un choix de gameplay (raciaux)
+  exprimé visuellement par une variante de skin/teinte — pas de morphologie dédiée
+  tant qu'on utilise Paragon.
+- **Décors : série FANTASTIC de Tidal Flask** (stylisé peint à la main, l'esprit
+  visuel de WoW) — Battle/Dungeon Pack pour habiller l'arène au M4/M7.
+- **VFX de sorts** : Paragon (chaque héros embarque les siens) + un pack Niagara
+  stylisé par écoles si besoin de compléter.
+- Les capsules restent la référence de lisibilité : tout habillage qui dégrade la
+  lecture du combat (silhouettes, télégraphes de casts) sera revu.
 
 ## Règles de combat
 

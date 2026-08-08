@@ -6,6 +6,10 @@ Saved/
 Build/
 Platforms/
 
+# Gros packs d'assets ajoutés localement depuis Fab (référencés en soft paths CSV,
+# fallback capsule si absents) — trop lourds pour le quota Git LFS
+Content/Paragon*/
+
 # IDE
 .vs/
 .idea/
