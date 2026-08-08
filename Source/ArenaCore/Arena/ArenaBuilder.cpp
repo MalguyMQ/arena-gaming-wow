@@ -102,6 +102,30 @@ void AArenaBuilder::Rebuild()
 	});
 
 	UE_LOG(LogArena, Log, TEXT("ArenaBuilder : %d éléments construits."), BuiltComponents.Num());
+
+	if (GateOpenDelaySec > 0.f)
+	{
+		GetWorldTimerManager().SetTimer(GateTimerHandle, this, &AArenaBuilder::OpenGates, GateOpenDelaySec, false);
+	}
+}
+
+void AArenaBuilder::OpenGates()
+{
+	int32 OpenedCount = 0;
+	for (int32 Index = BuiltComponents.Num() - 1; Index >= 0; --Index)
+	{
+		UStaticMeshComponent* Component = BuiltComponents[Index];
+		if (Component && Component->ComponentTags.Contains(FName("ArenaGate")))
+		{
+			Component->DestroyComponent();
+			BuiltComponents.RemoveAt(Index);
+			++OpenedCount;
+		}
+	}
+	if (OpenedCount > 0)
+	{
+		UE_LOG(LogArena, Log, TEXT("Les portes s'ouvrent !"));
+	}
 }
 
 void AArenaBuilder::SpawnElement(const FName& RowName, const FArenaLayoutRow& Row)
