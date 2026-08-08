@@ -55,6 +55,19 @@ Format moderne : manches BO3, kits resserrés 8-10 touches. IP originale (aucun 
    à la racine de `Source/ArenaCore/` (déclarée dans le Build.cs).
 6. Le GameMode vient de `GlobalDefaultGameMode` (DefaultEngine.ini) — les maps restent vides.
 
+## Direction artistique (décidée)
+
+- **Personnages : assets Paragon** (gratuits, licence limitée à Unreal — OK pour nous).
+  Mapping classes → héros : Guerrier=Greystone, Mage=Gideon, Prêtre=Muriel, Voleur=Kallari.
+  Les races (Valdris/Kargh) restent un choix de gameplay (raciaux) + variante de skin/teinte.
+- **Décor : packs FANTASTIC de Tidal Flask** (stylisé hand-painted, l'esprit WoW).
+  Pour l'arène : Battle Pack et/ou Dungeon Pack. Achat/import au M4. S'ils sont
+  volumineux : même règle que Paragon (gitignore + soft paths).
+- **RÈGLE CRITIQUE : les packs Paragon ne vont JAMAIS dans le repo git** (plusieurs Go/héros,
+  le quota LFS exploserait). `Content/Paragon*` est gitignoré : Quentin les ajoute localement
+  depuis Fab, les CSV les référencent en soft paths, et le fallback capsule garde le projet
+  fonctionnel sans eux. Idem pour tout gros pack : gitignore + soft path + fallback.
+
 ## Contexte utilisateur
 
 Quentin (solo dev, ex-joueur d'arène WoW) : clone unique dans
