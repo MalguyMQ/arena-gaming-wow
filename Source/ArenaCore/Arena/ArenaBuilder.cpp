@@ -9,7 +9,23 @@
 #include "Engine/GameInstance.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "EngineUtils.h"
 #include "UObject/ConstructorHelpers.h"
+
+static FAutoConsoleCommandWithWorldAndArgs GArenaOpenGatesCmd(
+	TEXT("Arena.OpenGates"),
+	TEXT("Ouvre immédiatement les portes de départ (sans attendre le décompte)."),
+	FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>&, UWorld* World)
+	{
+		if (!World)
+		{
+			return;
+		}
+		for (TActorIterator<AArenaBuilder> It(World); It; ++It)
+		{
+			It->OpenGates();
+		}
+	}));
 
 AArenaBuilder::AArenaBuilder()
 {
@@ -106,6 +122,7 @@ void AArenaBuilder::Rebuild()
 	if (GateOpenDelaySec > 0.f)
 	{
 		GetWorldTimerManager().SetTimer(GateTimerHandle, this, &AArenaBuilder::OpenGates, GateOpenDelaySec, false);
+		UE_LOG(LogArena, Log, TEXT("Portes programmées pour s'ouvrir dans %.0f s (Arena.OpenGates pour forcer)."), GateOpenDelaySec);
 	}
 }
 
