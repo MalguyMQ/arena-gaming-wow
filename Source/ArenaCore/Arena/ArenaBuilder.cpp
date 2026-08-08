@@ -126,6 +126,15 @@ void AArenaBuilder::Rebuild()
 	}
 }
 
+float AArenaBuilder::GetGateTimeRemaining() const
+{
+	if (!GateTimerHandle.IsValid())
+	{
+		return -1.f;
+	}
+	return GetWorldTimerManager().GetTimerRemaining(GateTimerHandle);
+}
+
 void AArenaBuilder::OpenGates()
 {
 	int32 OpenedCount = 0;

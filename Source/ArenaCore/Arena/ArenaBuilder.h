@@ -31,6 +31,9 @@ public:
 	// local sur chaque machine — M5 le pilotera depuis la phase de match répliquée.
 	void OpenGates();
 
+	// Secondes avant l'ouverture des portes ; <= 0 si déjà ouvertes.
+	float GetGateTimeRemaining() const;
+
 	UPROPERTY(EditAnywhere, Category = "Arena")
 	float GateOpenDelaySec = 15.f;
 

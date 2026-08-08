@@ -1,8 +1,10 @@
 // Copyright Flagcat Studio. All Rights Reserved.
 
 #include "UI/ArenaMainWidget.h"
+#include "Arena/ArenaBuilder.h"
 #include "Characters/ArenaCharacter.h"
 #include "Combat/ArenaTargetingComponent.h"
+#include "EngineUtils.h"
 #include "AbilitySystem/ArenaAttributeSet.h"
 #include "ArenaGameplayTags.h"
 #include "System/ArenaDataSubsystem.h"
@@ -81,6 +83,16 @@ void UArenaMainWidget::NativeOnInitialized()
 
 		ActionSlots.Add(SlotWidgets);
 	}
+
+	GateCountdownText = WidgetTree->ConstructWidget<UTextBlock>();
+	GateCountdownText->SetFont(FCoreStyle::GetDefaultFontStyle("Bold", 26));
+	GateCountdownText->SetColorAndOpacity(FSlateColor(FLinearColor(1.f, 0.85f, 0.2f)));
+	GateCountdownText->SetJustification(ETextJustify::Center);
+	UCanvasPanelSlot* CountdownSlot = RootCanvas->AddChildToCanvas(GateCountdownText);
+	CountdownSlot->SetAnchors(FAnchors(0.5f, 0.f, 0.5f, 0.f));
+	CountdownSlot->SetAlignment(FVector2D(0.5f, 0.f));
+	CountdownSlot->SetPosition(FVector2D(0.f, 80.f));
+	CountdownSlot->SetAutoSize(true);
 
 	FeedbackHandle = AArenaCharacter::OnCombatFeedback.AddUObject(this, &UArenaMainWidget::HandleCombatFeedback);
 }
@@ -319,4 +331,34 @@ void UArenaMainWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime
 
 	UpdateActionBar(OwnCharacter);
 	UpdateFloatingTexts(GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f);
+	UpdateGateCountdown();
+}
+
+void UArenaMainWidget::UpdateGateCountdown()
+{
+	if (!GateCountdownText)
+	{
+		return;
+	}
+
+	if (!CachedBuilder.IsValid())
+	{
+		for (TActorIterator<AArenaBuilder> It(GetWorld()); It; ++It)
+		{
+			CachedBuilder = *It;
+			break;
+		}
+	}
+
+	const float Remaining = CachedBuilder.IsValid() ? CachedBuilder->GetGateTimeRemaining() : -1.f;
+	if (Remaining > 0.f)
+	{
+		GateCountdownText->SetVisibility(ESlateVisibility::HitTestInvisible);
+		GateCountdownText->SetText(FText::FromString(
+			FString::Printf(TEXT("Ouverture des portes : %d"), FMath::CeilToInt(Remaining))));
+	}
+	else
+	{
+		GateCountdownText->SetVisibility(ESlateVisibility::Hidden);
+	}
 }

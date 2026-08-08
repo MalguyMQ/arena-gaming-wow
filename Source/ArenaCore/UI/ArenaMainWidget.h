@@ -12,6 +12,7 @@ class UProgressBar;
 class UBorder;
 class UVerticalBox;
 class AArenaCharacter;
+class AArenaBuilder;
 
 // HUD principal construit 100 % en C++ (aucun asset UMG) :
 // frame joueur (PV + ressource), frame de cible, barre d'action avec décomptes
@@ -55,9 +56,13 @@ private:
 	void UpdateUnitFrame(const FUnitFrame& Frame, const AArenaCharacter* Character) const;
 	void UpdateActionBar(const AArenaCharacter* Character);
 	void UpdateFloatingTexts(float Now);
+	void UpdateGateCountdown();
 	void HandleCombatFeedback(AActor* Victim, float Magnitude, int32 FeedbackType);
 
 	UPROPERTY() TObjectPtr<UCanvasPanel> RootCanvas;
+	UPROPERTY() TObjectPtr<UTextBlock> GateCountdownText;
+
+	TWeakObjectPtr<AArenaBuilder> CachedBuilder;
 
 	FUnitFrame PlayerFrame;
 	FUnitFrame TargetFrame;
